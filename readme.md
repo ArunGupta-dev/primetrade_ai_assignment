@@ -16,6 +16,41 @@ A scalable REST API with Role-Based Access Control (RBAC), built with Django RES
 * **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+), Fetch API
 * **Security:** Argon2/PBKDF2 Password Hashing, JWT
 
+## Testing Role-Based Access Control (RBAC)
+
+The system distinguishes between **Analysts** (Normal Users) and **Head Traders** (Admins/Staff). To test both roles without registering multiple separate accounts manually, the automated setup scripts (both Docker and the shell script) will automatically generate a Superuser account.
+
+### Step-by-Step: Promoting a User to Head Trader (Admin)
+
+1. **Log in to the Django Admin Panel:**
+   * Open your browser and navigate to: `http://localhost:8000/admin/`
+   * Log in using the auto-generated credentials:
+     * **Username:** `admin`
+     * **Password:** `admin1234`
+
+2. **Create or Locate a User Account:**
+   * Click on **Users** under the *Authentication and Authorization* section.
+   * If you have already registered an account via the frontend dashboard, find that user's email/username in the list.
+   * If not, click **Add User** in the top right to create a new analyst account.
+
+3. **Elevate Privileges to Head Trader:**
+   * Click on the user profile you want to promote.
+   * Scroll down to the **Permissions** section.
+   * Check the box for **Staff status (`is_staff`)**. This designation grants the user Head Trader privileges across the REST API.
+   * Click **Save** at the bottom of the page.
+
+4. **Verify on the Frontend Dashboard:**
+   * Go back to your frontend dashboard (`http://localhost:8000/home/`).
+   * Log in with the newly promoted user's credentials.
+   * The user will now have global read/write access to view, edit, or delete all platform trade notes rather than just their own.
+
+### Custom Superuser Creation (Optional)
+If you are running the project manually or prefer to create a custom superuser, ensure your virtual environment is active and run the following command from the `primetrade_ai` directory:
+```bash
+python manage.py createsuperuser
+
+
+
 ## Local Setup & Usage Instructions
 
 You can run this project using either the provided shell script, manual setup, or Docker. 
