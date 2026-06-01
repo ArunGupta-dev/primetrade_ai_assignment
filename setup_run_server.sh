@@ -22,6 +22,11 @@ echo "Installing dependencies from requirements.txt..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
+# --- FIX: Navigate to where manage.py is located ---
+echo "Navigating to the Django project directory..."
+cd primetrade_ai
+# ---------------------------------------------------
+
 echo "Applying database migrations..."
 python manage.py makemigrations
 python manage.py migrate
