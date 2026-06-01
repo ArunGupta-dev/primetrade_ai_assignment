@@ -48,6 +48,7 @@ The system distinguishes between **Analysts** (Normal Users) and **Head Traders*
 If you are running the project manually or prefer to create a custom superuser, ensure your virtual environment is active and run the following command from the `primetrade_ai` directory:
 ```bash
 python manage.py createsuperuser
+```
 
 
 
