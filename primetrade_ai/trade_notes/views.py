@@ -1,3 +1,7 @@
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers
+
+
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -16,7 +20,17 @@ from rest_framework import viewsets, permissions
 createLog = Logger()
 
 
-
+@extend_schema(
+    summary="Create Trade Note",
+    description="Creates a new trade note associated with the logged-in user.",
+    request=inline_serializer(
+        name="CreateNoteRequest",
+        fields={
+            "market_symbol": serializers.CharField(),
+            "trading_thesis": serializers.CharField(),
+        }
+    )
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_note(request):
@@ -52,7 +66,25 @@ def create_note(request):
 
 
 
+
+
+
+
+
+
+@extend_schema(
+    summary="Update Trade Note",
+    description="Modifies the trading thesis of an existing note.",
+    request=inline_serializer(
+        name="UpdateNoteRequest",
+        fields={
+            "note_id": serializers.UUIDField(),
+            "trading_thesis": serializers.CharField(),
+        }
+    )
+)
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
 def update_note(request):
 
     data = request.data
@@ -138,7 +170,10 @@ class IsOwnerOrAdmin(permissions.BasePermission):
             return True
         return obj.author== request.user
 
-
+@extend_schema(
+    summary="Get All Trade Notes",
+    description="Fetches stored trade notes filtered by ownership or admin privilege level."
+)
 class TradeNoteViewSet(viewsets.ModelViewSet):
     serializer_class = trade_notes_serializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]

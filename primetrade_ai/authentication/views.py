@@ -1,3 +1,5 @@
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -11,7 +13,17 @@ from authentication.utils.Authentication_handler import Authentication_handler
 createLog = Logger()
 
 
-
+@extend_schema(
+    summary="User Signup",
+    description="Registers a new user account inside the database.",
+    request=inline_serializer(
+        name="SignupRequest",
+        fields={
+            "username": serializers.CharField(),
+            "password": serializers.CharField(),
+        }
+    )
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
@@ -50,7 +62,10 @@ def signup(request):
                 )
 
     
-
+@extend_schema(
+    summary="Auto Authentication Check",
+    description="Validates the token session on initial app load."
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def auto_auth(request):
@@ -62,7 +77,10 @@ def auto_auth(request):
 
 
 
-
+@extend_schema(
+    summary="Get User Profile",
+    description="Returns the username and staff status of the authenticated user."
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_profile(request):

@@ -1,156 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prime Trade AI - Loading...</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: #0a0b0e;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-
-        .brand-title {
-            color: #ffffff;
-            font-size: 28px;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: fadeIn 1s ease-out forwards;
-        }
-
-        /* 4-Bubble Loading Animation */
-        .loading-bubbles {
-            display: flex;
-            gap: 12px;
-            opacity: 0;
-            animation: fadeIn 1s ease-out 0.3s forwards;
-        }
-
-        .bubble {
-            width: 16px;
-            height: 16px;
-            background-color: #3b82f6; /* Prime Trade Blue */
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        /* Staggered animation delays for the wave effect */
-        .bubble:nth-child(1) { animation-delay: -0.45s; }
-        .bubble:nth-child(2) { animation-delay: -0.30s; }
-        .bubble:nth-child(3) { animation-delay: -0.15s; }
-        .bubble:nth-child(4) { animation-delay: 0s; }
-
-        .status-text {
-            margin-top: 24px;
-            font-size: 14px;
-            color: #94a3b8;
-            font-weight: 400;
-            opacity: 0;
-            animation: fadeIn 1s ease-out 0.6s forwards;
-        }
-
-        /* Keyframes */
-        @keyframes bounce {
-            0%, 80%, 100% { 
-                transform: scale(0);
-                opacity: 0.3;
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Prime Trade AI - Sign In</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
             }
-            40% { 
-                transform: scale(1);
-                opacity: 1;
-                background-color: #60a5fa;
+
+            body {
+                background: radial-gradient(circle at top left, #1e293b, #020617);
+                color: #f8fafc;
+                font-family: 'Inter', sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
             }
-        }
 
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-    </style>
-</head>
-<body>
+            .auth-container {
+                background: rgba(15, 23, 42, 0.6);
+                backdrop-filter: blur(12px);
+                padding: 48px 40px;
+                border-radius: 16px;
+                width: 100%;
+                max-width: 440px;
+                border: 1px solid rgba(51, 65, 85, 0.5);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            }
 
-    <h1 class="brand-title">Prime Trade AI</h1>
-    
-    <div class="loading-bubbles">
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-    </div>
+            h1 {
+                color: #ffffff;
+                font-size: 28px;
+                margin-bottom: 8px;
+                text-align: center;
+                font-weight: 700;
+                letter-spacing: -0.5px;
+            }
 
-    <div class="status-text" id="statusText">Authenticating secure connection...</div>
+            .subtitle {
+                text-align: center;
+                color: #94a3b8;
+                font-size: 14px;
+                margin-bottom: 32px;
+            }
 
-    <script>
-        // Execute the auth check as soon as the DOM is ready
-        document.addEventListener('DOMContentLoaded', async () => {
-            const statusText = document.getElementById('statusText');
+            .form-group {
+                margin-bottom: 24px;
+            }
 
-            try {
-                const token = localStorage.getItem('access_token');
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                };
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-size: 13px;
+                font-weight: 500;
+                color: #cbd5e1;
+            }
 
-                console.log(token);
-                
-                // If the user has a JWT, attach it
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
+            input {
+                width: 100%;
+                padding: 14px 16px;
+                background-color: rgba(2, 6, 23, 0.5);
+                border: 1px solid #334155;
+                border-radius: 8px;
+                color: #ffffff;
+                font-size: 14px;
+                transition: all 0.3s ease;
+            }
 
-                const response = await fetch('/api/v1/auth/auto_auth/', {
-                    method: 'GET', 
-                    headers: headers
-                });
+            input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+                background-color: rgba(2, 6, 23, 0.8);
+            }
 
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    statusText.textContent = "Routing...";
+            button {
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                color: #ffffff;
+                border: none;
+                border-radius: 8px;
+                font-size: 15px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                margin-top: 8px;
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            }
 
-                    // Adjust the keys 'user_type' or 'status' to match your actual DRF JSON response
-                    if (data.code === 'authenticated') {
-                        // Add a slight delay for a smooth transition experience
-                        setTimeout(() => {
-                            window.location.href = '/home/'; // Redirect to home/dashboard
-                        }, 800);
-                    } else {
-                        setTimeout(() => {
-                            window.location.href = '/signup/'; // Redirect to auth page
-                        }, 800);
+            button:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+            }
+
+            button:active {
+                transform: translateY(1px);
+            }
+
+            button:disabled {
+                background: #1e3a8a;
+                cursor: not-allowed;
+                opacity: 0.7;
+                transform: none;
+                box-shadow: none;
+            }
+
+            .auth-links {
+                margin-top: 24px;
+                text-align: center;
+                font-size: 14px;
+                color: #94a3b8;
+            }
+
+            .auth-links a {
+                color: #3b82f6;
+                text-decoration: none;
+                font-weight: 500;
+                transition: color 0.2s ease;
+            }
+
+            .auth-links a:hover {
+                color: #60a5fa;
+            }
+
+            .message {
+                margin-top: 16px;
+                text-align: center;
+                font-size: 13px;
+                min-height: 20px;
+                font-weight: 500;
+            }
+
+            .error {
+                color: #f87171;
+            }
+
+            .success {
+                color: #34d399;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="auth-container">
+            <h1>Prime Trade AI</h1>
+            <div class="subtitle">Welcome back, please sign in</div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" id="submitBtn">Sign In</button>
+                <div id="message" class="message"></div>
+            </form>
+
+            <div class="auth-links">
+                Don't have an account? <a href="/signup/">Create one here</a>
+            </div>
+        </div>
+
+        <script>
+            async function checkSession() {
+                const access = localStorage.getItem('access_token');
+                const refresh = localStorage.getItem('refresh_token');
+
+                if (!access) return;
+
+                try {
+                    let response = await fetch('/api/v1/auth/auto_auth/', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${access}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/home/';
+                        return;
                     }
-                } else {
-                    // Handle 401 Unauthorized or other server errors
-                    statusText.textContent = "Session expired. Redirecting to login...";
-                    setTimeout(() => {
-                        window.location.href = '/signup/'; // Fallback to auth page
-                    }, 1200);
+
+                    if (response.status === 401 && refresh) {
+                        const refreshResponse = await fetch('/api/v1/auth/token/refresh/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ refresh: refresh })
+                        });
+
+                        if (refreshResponse.ok) {
+                            const refreshData = await refreshResponse.json();
+                            localStorage.setItem('access_token', refreshData.access);
+                            window.location.href = '/home/';
+                        } else {
+                            localStorage.removeItem('access_token');
+                            localStorage.removeItem('refresh_token');
+                        }
+                    }
+                } catch (error) {
+                    console.error(error);
                 }
-
-            } catch (error) {
-                console.error("Auth check failed:", error);
-                statusText.textContent = "Network error. Please try again.";
-                statusText.style.color = "#ef4444"; // Red error color
             }
-        });
-    </script>
 
-</body>
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const messageEl = document.getElementById('message');
+                const submitBtn = document.getElementById('submitBtn');
+
+                messageEl.textContent = '';
+                messageEl.className = 'message';
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Authenticating...';
+
+                try {
+                    const response = await fetch('/api/v1/auth/login/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        localStorage.setItem('access_token', data.access);
+                        localStorage.setItem('refresh_token', data.refresh);
+                        
+                        messageEl.textContent = 'Authentication successful. Redirecting...';
+                        messageEl.classList.add('success');
+                        
+                        setTimeout(() => {
+                            window.location.href = '/home/';
+                        }, 1000);
+                    } else {
+                        const errorText = data.detail || 'Invalid username or password.';
+                        messageEl.textContent = errorText;
+                        messageEl.classList.add('error');
+                    }
+                } catch (error) {
+                    messageEl.textContent = 'Network error. Ensure your Django server is running.';
+                    messageEl.classList.add('error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Sign In';
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', checkSession);
+        </script>
+    </body>
 </html>
