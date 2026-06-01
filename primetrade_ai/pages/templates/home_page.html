@@ -254,6 +254,54 @@
                 text-align: center;
                 min-height: 20px;
             }
+
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(2, 6, 23, 0.8);
+                backdrop-filter: blur(4px);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
+
+            .modal {
+                background: rgba(15, 23, 42, 0.95);
+                border: 1px solid rgba(51, 65, 85, 0.8);
+                border-radius: 12px;
+                padding: 24px;
+                width: 90%;
+                max-width: 400px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            }
+
+            .modal h3 {
+                color: #ffffff;
+                font-size: 18px;
+                margin-bottom: 16px;
+            }
+
+            .modal p {
+                color: #cbd5e1;
+                font-size: 14px;
+                margin-bottom: 24px;
+                line-height: 1.5;
+            }
+
+            .modal-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+
+            .modal-actions .btn-small {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
         </style>
     </head>
     <body>
@@ -291,20 +339,34 @@
             </div>
         </main>
 
+        <div id="deleteModal" class="modal-overlay">
+            <div class="modal">
+                <h3>Delete Note</h3>
+                <p>Are you sure you want to delete this note? This action cannot be undone.</p>
+                <div class="modal-actions">
+                    <button class="btn-small" onclick="closeDeleteModal()">Cancel</button>
+                    <button class="btn-small delete" onclick="confirmDelete()">Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="editModal" class="modal-overlay">
+            <div class="modal">
+                <h3>Edit Thesis - <span id="editSymbol"></span></h3>
+                <div class="form-group">
+                    <textarea id="editNoteContent" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-small" onclick="closeEditModal()">Cancel</button>
+                    <button class="btn-small edit" onclick="confirmEdit()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
         <script>
             const API_BASE = '/api/v1';
-
-            function getAuthHeaders() {
-                const token = localStorage.getItem('access_token');
-                if (!token) {
-                    //window.location.href = '/login/';
-                    return null;
-                }
-                return {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                };
-            }
+            let currentDeleteId = null;
+            let currentEditId = null;
 
             function logout() {
                 localStorage.removeItem('access_token');
@@ -312,13 +374,53 @@
                 window.location.href = '/login/';
             }
 
-            async function initDashboard() {
-                const headers = getAuthHeaders();
-                if (!headers) return;
+            async function authenticatedFetch(url, options = {}) {
+                let token = localStorage.getItem('access_token');
+                if (!token) {
+                    logout();
+                    return null;
+                }
 
+                options.headers = {
+                    ...options.headers,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                };
+
+                let response = await fetch(url, options);
+
+                if (response.status === 401) {
+                    const refreshToken = localStorage.getItem('refresh_token');
+                    if (!refreshToken) {
+                        logout();
+                        return null;
+                    }
+
+                    const refreshResponse = await fetch(`${API_BASE}/auth/token/refresh/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh: refreshToken })
+                    });
+
+                    if (refreshResponse.ok) {
+                        const refreshData = await refreshResponse.json();
+                        localStorage.setItem('access_token', refreshData.access);
+                        options.headers['Authorization'] = `Bearer ${refreshData.access}`;
+                        response = await fetch(url, options);
+                    } else {
+                        logout();
+                        return null;
+                    }
+                }
+
+                return response;
+            }
+
+            async function initDashboard() {
                 try {
-                    const profileRes = await fetch(`${API_BASE}/auth/me/`, { headers });
-                    if (!profileRes.ok) throw new Error('Auth failed');
+                    const profileRes = await authenticatedFetch(`${API_BASE}/auth/me/`);
+                    if (!profileRes || !profileRes.ok) throw new Error('Profile fetch failed');
                     
                     const profile = await profileRes.json();
                     document.getElementById('usernameDisplay').textContent = profile.username;
@@ -329,15 +431,14 @@
 
                     loadNotes();
                 } catch (error) {
-                    logout();
+                    console.error(error);
                 }
             }
 
             async function loadNotes() {
-                const headers = getAuthHeaders();
                 try {
-                    const res = await fetch(`${API_BASE}/tradenotes/`, { headers });
-                    if (!res.ok) throw new Error('Failed to fetch notes');
+                    const res = await authenticatedFetch(`${API_BASE}/notes/get/`);
+                    if (!res || !res.ok) throw new Error('Failed to fetch notes');
                     
                     const notes = await res.json();
                     const grid = document.getElementById('notesGrid');
@@ -348,13 +449,13 @@
                         card.className = 'note-card';
                         card.innerHTML = `
                             <div class="note-header">
-                                <span class="note-symbol">${note.symbol}</span>
-                                <span class="note-user">Author: ${note.user_details?.username || 'User'}</span>
+                                <span class="note-symbol">${note.market_symbol}</span>
+                                <span class="note-user">Author ID: ${note.author}</span>
                             </div>
-                            <div class="note-content">${note.note}</div>
+                            <div class="note-content">${note.trading_thesis}</div>
                             <div class="note-actions">
-                                <button class="btn-small edit" onclick="editNote(${note.id}, '${note.symbol}', '${note.note.replace(/'/g, "\\'")}')">Edit</button>
-                                <button class="btn-small delete" onclick="deleteNote(${note.id})">Delete</button>
+                                <button class="btn-small edit" onclick="editNote('${note.note_id}', '${note.market_symbol}', '${note.trading_thesis.replace(/'/g, "\\'")}')">Edit</button>
+                                <button class="btn-small delete" onclick="deleteNote('${note.note_id}')">Delete</button>
                             </div>
                         `;
                         grid.appendChild(card);
@@ -366,25 +467,23 @@
 
             document.getElementById('createNoteForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const headers = getAuthHeaders();
                 const submitBtn = document.getElementById('submitBtn');
                 const formMsg = document.getElementById('formMsg');
                 
-                const symbol = document.getElementById('symbol').value;
-                const note = document.getElementById('note').value;
+                const market_symbol = document.getElementById('symbol').value;
+                const trading_thesis = document.getElementById('note').value;
 
                 submitBtn.disabled = true;
                 formMsg.textContent = 'Saving...';
                 formMsg.style.color = '#94a3b8';
 
                 try {
-                    const res = await fetch(`${API_BASE}/tradenotes/`, {
+                    const res = await authenticatedFetch(`${API_BASE}/notes/create/`, {
                         method: 'POST',
-                        headers: headers,
-                        body: JSON.stringify({ symbol, note })
+                        body: JSON.stringify({ market_symbol, trading_thesis })
                     });
 
-                    if (res.ok) {
+                    if (res && res.ok) {
                         document.getElementById('createNoteForm').reset();
                         formMsg.textContent = 'Note saved successfully.';
                         formMsg.style.color = '#34d399';
@@ -401,17 +500,29 @@
                 }
             });
 
-            async function deleteNote(id) {
-                if (!confirm('Are you sure you want to delete this note?')) return;
+            function deleteNote(id) {
+                currentDeleteId = id;
+                document.getElementById('deleteModal').style.display = 'flex';
+            }
+
+            function closeDeleteModal() {
+                currentDeleteId = null;
+                document.getElementById('deleteModal').style.display = 'none';
+            }
+
+            async function confirmDelete() {
+                if (!currentDeleteId) return;
                 
-                const headers = getAuthHeaders();
+                const id = currentDeleteId;
+                closeDeleteModal();
+
                 try {
-                    const res = await fetch(`${API_BASE}/tradenotes/${id}/`, {
+                    const res = await authenticatedFetch(`${API_BASE}/notes/delete/`, {
                         method: 'DELETE',
-                        headers: headers
+                        body: JSON.stringify({ note_id: id })
                     });
 
-                    if (res.ok) {
+                    if (res && res.ok) {
                         loadNotes();
                     } else {
                         alert('Error: You do not have permission to delete this note.');
@@ -421,19 +532,34 @@
                 }
             }
 
-            async function editNote(id, currentSymbol, currentNote) {
-                const newNote = prompt(`Edit your thesis for ${currentSymbol}:`, currentNote);
-                if (newNote === null || newNote === currentNote) return;
+            function editNote(id, currentSymbol, currentNote) {
+                currentEditId = id;
+                document.getElementById('editSymbol').textContent = currentSymbol;
+                document.getElementById('editNoteContent').value = currentNote;
+                document.getElementById('editModal').style.display = 'flex';
+            }
 
-                const headers = getAuthHeaders();
+            function closeEditModal() {
+                currentEditId = null;
+                document.getElementById('editModal').style.display = 'none';
+            }
+
+            async function confirmEdit() {
+                if (!currentEditId) return;
+                
+                const id = currentEditId;
+                const newNote = document.getElementById('editNoteContent').value;
+                closeEditModal();
+
+                if (!newNote.trim()) return;
+
                 try {
-                    const res = await fetch(`${API_BASE}/tradenotes/${id}/`, {
+                    const res = await authenticatedFetch(`${API_BASE}/notes/update/`, {
                         method: 'PATCH',
-                        headers: headers,
-                        body: JSON.stringify({ note: newNote })
+                        body: JSON.stringify({ note_id: id, trading_thesis: newNote })
                     });
 
-                    if (res.ok) {
+                    if (res && res.ok) {
                         loadNotes();
                     } else {
                         alert('Error: You do not have permission to edit this note.');

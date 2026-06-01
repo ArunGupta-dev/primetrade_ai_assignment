@@ -1,4 +1,3 @@
-from asyncio import iscoroutine
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -59,4 +58,18 @@ def auto_auth(request):
             {'code': 'authenticated'},
             status=status.HTTP_200_OK
             )
+
+
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_profile(request):
+    return Response({
+        'username': request.user.username,
+        'is_staff': request.user.is_staff
+    })
+
+
 
